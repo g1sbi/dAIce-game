@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useGameState } from '@/lib/game-state';
@@ -15,7 +15,6 @@ export default function GameScreen() {
   const router = useRouter();
   const {
     currentDice,
-    previousDice,
     round,
     myScore,
     opponentScore,
@@ -87,7 +86,7 @@ export default function GameScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.content}>
         <View style={styles.opponentArea}>
           <PlayerInfo
             points={opponentScore}
@@ -107,13 +106,8 @@ export default function GameScreen() {
         </View>
 
         <View style={styles.diceSection}>
-          {previousDice && (
-            <View style={styles.previousDice}>
-              <Dice value={previousDice} size={60} />
-            </View>
-          )}
           <View style={styles.currentDice}>
-            <Dice value={currentDice} size={140} animated={gamePhase === 'REVEALING'} />
+            <Dice value={currentDice} size={120} animated={gamePhase === 'REVEALING'} />
           </View>
           <View style={styles.timerContainer}>
             {gamePhase === 'BETTING' ? (
@@ -147,7 +141,7 @@ export default function GameScreen() {
         <View style={styles.myStats}>
           <PlayerInfo points={myScore} winStreak={winStreak} round={round} />
         </View>
-      </ScrollView>
+      </View>
 
       {showResults && lastRoundResults && myResult && opponentResult && (
         <ResultsOverlay
@@ -179,69 +173,70 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 16,
-    gap: 24,
+  content: {
+    flex: 1,
+    padding: 12,
+    gap: 8,
   },
   opponentArea: {
-    gap: 12,
+    gap: 6,
+    flex: 0.2,
   },
   betStatus: {
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   lockedIndicator: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
     backgroundColor: '#1A3A1A',
   },
   lockedText: {
     color: '#00FF88',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
   },
   thinkingText: {
     color: '#666',
-    fontSize: 14,
+    fontSize: 12,
     fontStyle: 'italic',
   },
   diceSection: {
     alignItems: 'center',
-    gap: 16,
-    paddingVertical: 24,
-  },
-  previousDice: {
-    opacity: 0.5,
+    justifyContent: 'center',
+    gap: 8,
+    flex: 0.3,
   },
   currentDice: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   timerContainer: {
-    minHeight: 60,
+    height: 50,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rollingText: {
-    fontSize: 24,
+    fontSize: 20,
     color: '#FFFFFF',
     fontWeight: '600',
   },
   bettingArea: {
-    gap: 16,
+    gap: 12,
+    flex: 0.3,
+    justifyContent: 'center',
   },
   waitingContainer: {
-    padding: 16,
+    padding: 12,
     alignItems: 'center',
   },
   waitingText: {
     color: '#888',
-    fontSize: 16,
+    fontSize: 14,
   },
   myStats: {
-    marginTop: 'auto',
+    flex: 0.2,
   },
   gameOverOverlay: {
     ...StyleSheet.absoluteFillObject,

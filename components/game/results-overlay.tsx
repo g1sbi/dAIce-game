@@ -58,7 +58,7 @@ export default function ResultsOverlay({
 
     setTimeout(() => {
       onDismiss();
-    }, 2000);
+    }, 4000);
   }, []);
 
   const opponentStyle = useAnimatedStyle(() => ({
