@@ -1,98 +1,172 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import { roomManager } from '@/lib/room-manager';
+import { useGameState } from '@/lib/game-state';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
+  const [roomCode, setRoomCode] = useState('');
+  const { actions } = useGameState();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const handleHostGame = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      const code = await roomManager.createRoom();
+      actions.setRoom(code, 'host', useGameState.getState().playerId);
+      router.push('/lobby');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to create room. Please try again.');
+      console.error(error);
+    }
+  };
+
+  const handleJoinGame = async () => {
+    if (roomCode.length !== 6) {
+      Alert.alert('Invalid Code', 'Please enter a 6-digit room code');
+      return;
+    }
+
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      const success = await roomManager.joinRoom(roomCode);
+      if (success) {
+        actions.setRoom(roomCode, 'guest', useGameState.getState().playerId);
+        router.push('/lobby');
+      } else {
+        Alert.alert('Error', 'Failed to join room. Please check the code and try again.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to join room. Please try again.');
+      console.error(error);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Higher Lower Dice</Text>
+          <Text style={styles.subtitle}>Simultaneous Multiplayer Betting</Text>
+        </View>
+
+        <View style={styles.diceContainer}>
+          <View style={styles.dicePlaceholder}>
+            <Text style={styles.diceEmoji}>🎲</Text>
+          </View>
+        </View>
+
+        <View style={styles.actions}>
+          <TouchableOpacity style={styles.primaryButton} onPress={handleHostGame}>
+            <Text style={styles.primaryButtonText}>HOST GAME</Text>
+          </TouchableOpacity>
+
+          <View style={styles.joinSection}>
+            <TextInput
+              style={styles.codeInput}
+              value={roomCode}
+              onChangeText={setRoomCode}
+              placeholder="Enter 6-digit code"
+              placeholderTextColor="#666"
+              maxLength={6}
+              keyboardType="number-pad"
+            />
+            <TouchableOpacity style={styles.joinButton} onPress={handleJoinGame}>
+              <Text style={styles.joinButtonText}>JOIN GAME</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    gap: 48,
+  },
+  header: {
     alignItems: 'center',
     gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  title: {
+    fontSize: 42,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  subtitle: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
+  },
+  diceContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dicePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 24,
+    backgroundColor: '#1A1A1A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  diceEmoji: {
+    fontSize: 64,
+  },
+  actions: {
+    width: '100%',
+    gap: 24,
+  },
+  primaryButton: {
+    backgroundColor: '#00D4FF',
+    paddingVertical: 20,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#000000',
+    fontSize: 20,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+  },
+  joinSection: {
+    gap: 12,
+  },
+  codeInput: {
+    backgroundColor: '#1A1A1A',
+    borderWidth: 2,
+    borderColor: '#2A2A2A',
+    borderRadius: 12,
+    padding: 16,
+    color: '#FFFFFF',
+    fontSize: 18,
+    textAlign: 'center',
+    letterSpacing: 4,
+  },
+  joinButton: {
+    backgroundColor: '#FF00FF',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  joinButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    letterSpacing: 2,
   },
 });
