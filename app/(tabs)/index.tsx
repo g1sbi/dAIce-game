@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
-import { roomManager } from '@/lib/room-manager';
 import { useGameState } from '@/lib/game-state';
+import { roomManager } from '@/lib/room-manager';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -46,39 +46,51 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Higher Lower Dice</Text>
-          <Text style={styles.subtitle}>Simultaneous Multiplayer Betting</Text>
-        </View>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Higher Lower Dice</Text>
+              <Text style={styles.subtitle}>Simultaneous Multiplayer Betting</Text>
+            </View>
 
-        <View style={styles.diceContainer}>
-          <View style={styles.dicePlaceholder}>
-            <Text style={styles.diceEmoji}>🎲</Text>
+            <View style={styles.diceContainer}>
+              <View style={styles.dicePlaceholder}>
+                <Text style={styles.diceEmoji}>🎲</Text>
+              </View>
+            </View>
+
+            <View style={styles.actions}>
+              <TouchableOpacity style={styles.primaryButton} onPress={handleHostGame}>
+                <Text style={styles.primaryButtonText}>HOST GAME</Text>
+              </TouchableOpacity>
+
+              <View style={styles.joinSection}>
+                <TextInput
+                  style={styles.codeInput}
+                  value={roomCode}
+                  onChangeText={setRoomCode}
+                  placeholder="Enter 6-digit code"
+                  placeholderTextColor="#666"
+                  maxLength={6}
+                  keyboardType="number-pad"
+                  returnKeyType="done"
+                  onSubmitEditing={handleJoinGame}
+                />
+                <TouchableOpacity style={styles.joinButton} onPress={handleJoinGame}>
+                  <Text style={styles.joinButtonText}>JOIN GAME</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-        </View>
-
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.primaryButton} onPress={handleHostGame}>
-            <Text style={styles.primaryButtonText}>HOST GAME</Text>
-          </TouchableOpacity>
-
-          <View style={styles.joinSection}>
-            <TextInput
-              style={styles.codeInput}
-              value={roomCode}
-              onChangeText={setRoomCode}
-              placeholder="Enter 6-digit code"
-              placeholderTextColor="#666"
-              maxLength={6}
-              keyboardType="number-pad"
-            />
-            <TouchableOpacity style={styles.joinButton} onPress={handleJoinGame}>
-              <Text style={styles.joinButtonText}>JOIN GAME</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -88,12 +100,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    minHeight: '100%',
+  },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
     gap: 48,
+    paddingBottom: 48,
   },
   header: {
     alignItems: 'center',
